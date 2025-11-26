@@ -1,0 +1,189 @@
+{
+  "Connection": {
+    "Host": "localhost",
+    "Port": 1400,
+    "AutoConnect": true
+  },
+  "Loupedeck": {
+    "Enabled": true,
+    "Port": 19790
+  },
+  "EncoderMappings": [
+    {
+      "Id": "encoder-1",
+      "Label": "Pos X",
+      "ParameterPath": "Timeline 1.Layer 1.Position.x",
+      "MinValue": -1000.0,
+      "MaxValue": 1000.0,
+      "DefaultValue": 0.0,
+      "CoarseStep": 10.0,
+      "FineStep": 1.0,
+      "SyncWithPixera": true,
+      "DisplayFormat": "{0:F1}"
+    },
+    {
+      "Id": "encoder-2",
+      "Label": "Pos Y",
+      "ParameterPath": "Timeline 1.Layer 1.Position.y",
+      "MinValue": -1000.0,
+      "MaxValue": 1000.0,
+      "DefaultValue": 0.0,
+      "CoarseStep": 10.0,
+      "FineStep": 1.0,
+      "SyncWithPixera": true,
+      "DisplayFormat": "{0:F1}"
+    },
+    {
+      "Id": "encoder-3",
+      "Label": "Scale X",
+      "ParameterPath": "Timeline 1.Layer 1.Scale.x",
+      "MinValue": 0.0,
+      "MaxValue": 200.0,
+      "DefaultValue": 100.0,
+      "CoarseStep": 5.0,
+      "FineStep": 0.5,
+      "SyncWithPixera": true,
+      "DisplayFormat": "{0:F1}%"
+    },
+    {
+      "Id": "encoder-4",
+      "Label": "Scale Y",
+      "ParameterPath": "Timeline 1.Layer 1.Scale.y",
+      "MinValue": 0.0,
+      "MaxValue": 200.0,
+      "DefaultValue": 100.0,
+      "CoarseStep": 5.0,
+      "FineStep": 0.5,
+      "SyncWithPixera": true,
+      "DisplayFormat": "{0:F1}%"
+    },
+    {
+      "Id": "encoder-5",
+      "Label": "Rotation",
+      "ParameterPath": "Timeline 1.Layer 1.Rotation.z",
+      "MinValue": -180.0,
+      "MaxValue": 180.0,
+      "DefaultValue": 0.0,
+      "CoarseStep": 5.0,
+      "FineStep": 0.5,
+      "SyncWithPixera": true,
+      "DisplayFormat": "{0:F1}°"
+    },
+    {
+      "Id": "encoder-6",
+      "Label": "Opacity",
+      "ParameterPath": "Timeline 1.Layer 1.Opacity",
+      "MinValue": 0.0,
+      "MaxValue": 100.0,
+      "DefaultValue": 100.0,
+      "CoarseStep": 5.0,
+      "FineStep": 1.0,
+      "SyncWithPixera": true,
+      "DisplayFormat": "{0:F0}%"
+    }
+  ],
+  "FaderMappings": [
+    {
+      "Id": "fader-1",
+      "Label": "Timeline 1 Opacity",
+      "ParameterPath": "Timeline 1.Opacity",
+      "MinValue": 0.0,
+      "MaxValue": 100.0,
+      "DefaultValue": 100.0,
+      "CoarseStep": 1.0,
+      "FineStep": 0.1,
+      "SyncWithPixera": true,
+      "DisplayFormat": "{0:F0}%"
+    },
+    {
+      "Id": "fader-2",
+      "Label": "Timeline 2 Opacity",
+      "ParameterPath": "Timeline 2.Opacity",
+      "MinValue": 0.0,
+      "MaxValue": 100.0,
+      "DefaultValue": 100.0,
+      "CoarseStep": 1.0,
+      "FineStep": 0.1,
+      "SyncWithPixera": true,
+      "DisplayFormat": "{0:F0}%"
+    },
+    {
+      "Id": "fader-3",
+      "Label": "Layer 1 Opacity",
+      "ParameterPath": "Timeline 1.Layer 1.Opacity",
+      "MinValue": 0.0,
+      "MaxValue": 100.0,
+      "DefaultValue": 100.0,
+      "CoarseStep": 1.0,
+      "FineStep": 0.1,
+      "SyncWithPixera": true,
+      "DisplayFormat": "{0:F0}%"
+    },
+    {
+      "Id": "fader-4",
+      "Label": "Layer 2 Opacity",
+      "ParameterPath": "Timeline 1.Layer 2.Opacity",
+      "MinValue": 0.0,
+      "MaxValue": 100.0,
+      "DefaultValue": 100.0,
+      "CoarseStep": 1.0,
+      "FineStep": 0.1,
+      "SyncWithPixera": true,
+      "DisplayFormat": "{0:F0}%"
+    },
+    {
+      "Id": "fader-5",
+      "Label": "Master Volume",
+      "ParameterPath": "Master.Volume",
+      "MinValue": 0.0,
+      "MaxValue": 100.0,
+      "DefaultValue": 75.0,
+      "CoarseStep": 1.0,
+      "FineStep": 0.1,
+      "SyncWithPixera": true,
+      "DisplayFormat": "{0:F0}%"
+    },
+    {
+      "Id": "fader-6",
+      "Label": "Red",
+      "ParameterPath": "Timeline 1.Layer 1.Color.r",
+      "MinValue": 0.0,
+      "MaxValue": 255.0,
+      "DefaultValue": 255.0,
+      "CoarseStep": 5.0,
+      "FineStep": 1.0,
+      "SyncWithPixera": true,
+      "DisplayFormat": "{0:F0}"
+    },
+    {
+      "Id": "fader-7",
+      "Label": "Green",
+      "ParameterPath": "Timeline 1.Layer 1.Color.g",
+      "MinValue": 0.0,
+      "MaxValue": 255.0,
+      "DefaultValue": 255.0,
+      "CoarseStep": 5.0,
+      "FineStep": 1.0,
+      "SyncWithPixera": true,
+      "DisplayFormat": "{0:F0}"
+    },
+    {
+      "Id": "fader-8",
+      "Label": "Blue",
+      "ParameterPath": "Timeline 1.Layer 1.Color.b",
+      "MinValue": 0.0,
+      "MaxValue": 255.0,
+      "DefaultValue": 255.0,
+      "CoarseStep": 5.0,
+      "FineStep": 1.0,
+      "SyncWithPixera": true,
+      "DisplayFormat": "{0:F0}"
+    }
+  ],
+  "UiPreferences": {
+    "DarkTheme": true,
+    "FullScreenMode": false,
+    "WindowWidth": 1280,
+    "WindowHeight": 720
+  }
+}

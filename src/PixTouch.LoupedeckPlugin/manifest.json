@@ -1,0 +1,67 @@
+{
+  "$schema": "https://schemas.logi.com/action-manifest-1.0.json",
+  "id": "com.pixtouch.loupedeck",
+  "name": "PixTouch",
+  "version": "1.0.0",
+  "author": "PixTouch",
+  "description": "Control Pixera media server through PixTouch interface",
+  "icon": "icon.png",
+  "categories": ["Media"],
+  "actions": [
+    {
+      "id": "encoder1",
+      "name": "Encoder 1",
+      "type": "adjustment"
+    },
+    {
+      "id": "encoder2",
+      "name": "Encoder 2",
+      "type": "adjustment"
+    },
+    {
+      "id": "encoder3",
+      "name": "Encoder 3",
+      "type": "adjustment"
+    },
+    {
+      "id": "encoder4",
+      "name": "Encoder 4",
+      "type": "adjustment"
+    },
+    {
+      "id": "encoder5",
+      "name": "Encoder 5",
+      "type": "adjustment"
+    },
+    {
+      "id": "encoder6",
+      "name": "Encoder 6",
+      "type": "adjustment"
+    },
+    {
+      "id": "play",
+      "name": "Play",
+      "type": "button"
+    },
+    {
+      "id": "pause",
+      "name": "Pause",
+      "type": "button"
+    },
+    {
+      "id": "stop",
+      "name": "Stop",
+      "type": "button"
+    },
+    {
+      "id": "next_cue",
+      "name": "Next Cue",
+      "type": "button"
+    },
+    {
+      "id": "prev_cue",
+      "name": "Previous Cue",
+      "type": "button"
+    }
+  ]
+}

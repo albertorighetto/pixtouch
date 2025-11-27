@@ -1,192 +1,241 @@
-using System.Net.Sockets;
-using System.Text;
-using PixTouch.Core.Protocol;
-using Newtonsoft.Json;
-
-namespace PixTouch.LoupedeckPlugin;
-
-/// <summary>
-/// Main plugin class that connects to PixTouch application
-/// This plugin acts as a "dumb terminal" - all logic is controlled by PixTouch
-/// </summary>
-public class PixTouchPlugin : IDisposable
+namespace Loupedeck.PixTouchPlugin
 {
-    private TcpClient? _client;
-    private NetworkStream? _stream;
-    private StreamReader? _reader;
-    private StreamWriter? _writer;
-    private CancellationTokenSource? _cts;
-    private bool _isRunning;
-    private readonly SemaphoreSlim _sendLock = new(1, 1);
-
-    public event EventHandler<LoupedeckMessage>? MessageReceived;
-    public event EventHandler? Connected;
-    public event EventHandler? Disconnected;
-
-    public bool IsConnected => _client?.Connected == true;
+    using System;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Newtonsoft.Json;
+    using PixTouch.Core.Protocol;
+    using Loupedeck.PixTouchPlugin.Actions;
 
     /// <summary>
-    /// Connect to PixTouch application
+    /// Main plugin class that connects to PixTouch application via TCP.
+    /// This plugin acts as a "dumb terminal" - all logic is controlled by PixTouch.
     /// </summary>
-    public async Task ConnectAsync(string host = "localhost", int port = 19790, CancellationToken cancellationToken = default)
+    public class PixTouchPlugin : Plugin
     {
-        if (_isRunning)
-            throw new InvalidOperationException("Already connected");
+        private TcpClient _client;
+        private NetworkStream _stream;
+        private StreamReader _reader;
+        private StreamWriter _writer;
+        private CancellationTokenSource _cts;
+        private Boolean _isRunning;
+        private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
 
-        try
+        // Connection settings
+        private const String DefaultHost = "localhost";
+        private const Int32 DefaultPort = 19790;
+
+        public override Boolean UsesApplicationApiOnly => true;
+        public override Boolean HasNoApplication => false;
+
+        public PixTouchPlugin()
         {
-            _client = new TcpClient();
-            await _client.ConnectAsync(host, port, cancellationToken);
-            _stream = _client.GetStream();
-            _reader = new StreamReader(_stream, Encoding.UTF8);
-            _writer = new StreamWriter(_stream, Encoding.UTF8) { AutoFlush = true };
-
-            _isRunning = true;
-            _cts = new CancellationTokenSource();
-
-            OnConnected();
-
-            _ = Task.Run(() => ReceiveMessagesAsync(_cts.Token), cancellationToken);
-        }
-        catch
-        {
-            await DisconnectAsync();
-            throw;
-        }
-    }
-
-    public async Task DisconnectAsync()
-    {
-        _isRunning = false;
-        _cts?.Cancel();
-
-        try
-        {
-            _reader?.Dispose();
-            _writer?.Dispose();
-            _stream?.Dispose();
-            _client?.Dispose();
-        }
-        catch
-        {
-            // Ignore cleanup errors
+            // Initialize plugin logging
+            PluginLog.Init(this.Log);
+            PluginLog.Info("PixTouch Plugin initialized");
         }
 
-        _reader = null;
-        _writer = null;
-        _stream = null;
-        _client = null;
-
-        OnDisconnected();
-
-        await Task.CompletedTask;
-    }
-
-    private async Task ReceiveMessagesAsync(CancellationToken cancellationToken)
-    {
-        try
+        public override void Load()
         {
-            while (_isRunning && !cancellationToken.IsCancellationRequested && _reader != null)
+            PluginLog.Info("Loading PixTouch Plugin...");
+
+            // Register encoder adjustments (6 encoders)
+            for (var i = 1; i <= 6; i++)
             {
-                var line = await _reader.ReadLineAsync(cancellationToken);
-                if (string.IsNullOrEmpty(line))
-                    break;
+                var encoder = new EncoderAdjustment(this, i);
+                PluginLog.Info($"Registered Encoder {i}");
+            }
 
-                try
-                {
-                    var message = JsonConvert.DeserializeObject<LoupedeckMessage>(line);
-                    if (message != null)
-                    {
-                        OnMessageReceived(message);
-                    }
-                }
-                catch
-                {
-                    // Invalid message format
-                }
+            // Register button commands
+            var buttons = new[]
+            {
+                ("play", "Play"),
+                ("pause", "Pause"),
+                ("stop", "Stop"),
+                ("next_cue", "Next Cue"),
+                ("prev_cue", "Previous Cue")
+            };
+
+            foreach (var (id, name) in buttons)
+            {
+                var button = new ButtonCommand(this, id, name);
+                PluginLog.Info($"Registered button: {name}");
+            }
+
+            // Start TCP connection to PixTouch
+            Task.Run(async () => await this.ConnectToPixTouchAsync());
+
+            PluginLog.Info("PixTouch Plugin loaded successfully");
+        }
+
+        public override void Unload()
+        {
+            PluginLog.Info("Unloading PixTouch Plugin...");
+
+            this._isRunning = false;
+            this._cts?.Cancel();
+
+            try
+            {
+                this._reader?.Dispose();
+                this._writer?.Dispose();
+                this._stream?.Dispose();
+                this._client?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                PluginLog.Error($"Error during cleanup: {ex.Message}");
+            }
+
+            this._sendLock?.Dispose();
+            PluginLog.Info("PixTouch Plugin unloaded");
+        }
+
+        /// <summary>
+        /// Connect to PixTouch application
+        /// </summary>
+        private async Task ConnectToPixTouchAsync()
+        {
+            if (this._isRunning)
+            {
+                PluginLog.Warning("Already connected to PixTouch");
+                return;
+            }
+
+            try
+            {
+                PluginLog.Info($"Connecting to PixTouch at {DefaultHost}:{DefaultPort}...");
+                this._client = new TcpClient();
+                await this._client.ConnectAsync(DefaultHost, DefaultPort);
+                this._stream = this._client.GetStream();
+                this._reader = new StreamReader(this._stream, Encoding.UTF8);
+                this._writer = new StreamWriter(this._stream, Encoding.UTF8) { AutoFlush = true };
+
+                this._isRunning = true;
+                this._cts = new CancellationTokenSource();
+
+                PluginLog.Info("Connected to PixTouch successfully");
+
+                // Start receiving messages
+                _ = Task.Run(() => this.ReceiveMessagesAsync(this._cts.Token));
+            }
+            catch (Exception ex)
+            {
+                PluginLog.Error($"Failed to connect to PixTouch: {ex.Message}");
+                await this.DisconnectAsync();
             }
         }
-        catch (OperationCanceledException)
+
+        /// <summary>
+        /// Disconnect from PixTouch
+        /// </summary>
+        private async Task DisconnectAsync()
         {
-            // Normal cancellation
+            this._isRunning = false;
+            this._cts?.Cancel();
+
+            try
+            {
+                this._reader?.Dispose();
+                this._writer?.Dispose();
+                this._stream?.Dispose();
+                this._client?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                PluginLog.Error($"Error during disconnect: {ex.Message}");
+            }
+
+            this._reader = null;
+            this._writer = null;
+            this._stream = null;
+            this._client = null;
+
+            PluginLog.Info("Disconnected from PixTouch");
+            await Task.CompletedTask;
         }
-        catch
+
+        /// <summary>
+        /// Receive messages from PixTouch
+        /// </summary>
+        private async Task ReceiveMessagesAsync(CancellationToken cancellationToken)
         {
-            // Connection error
+            try
+            {
+                while (this._isRunning && !cancellationToken.IsCancellationRequested && this._reader != null)
+                {
+                    var line = await this._reader.ReadLineAsync();
+                    if (String.IsNullOrEmpty(line))
+                    {
+                        break;
+                    }
+
+                    try
+                    {
+                        var message = JsonConvert.DeserializeObject<LoupedeckMessage>(line);
+                        if (message != null)
+                        {
+                            this.HandleMessageFromPixTouch(message);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        PluginLog.Error($"Error parsing message: {ex.Message}");
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                PluginLog.Info("Message receiving cancelled");
+            }
+            catch (Exception ex)
+            {
+                PluginLog.Error($"Connection error: {ex.Message}");
+            }
+            finally
+            {
+                await this.DisconnectAsync();
+            }
         }
-        finally
+
+        /// <summary>
+        /// Handle incoming message from PixTouch (display updates, etc.)
+        /// </summary>
+        private void HandleMessageFromPixTouch(LoupedeckMessage message)
         {
-            await DisconnectAsync();
+            PluginLog.Info($"Received message from PixTouch: {message.Type}");
+            // TODO: Handle display updates and other messages from PixTouch
+            // This could update encoder displays, button states, etc.
         }
-    }
 
-    /// <summary>
-    /// Send encoder input to PixTouch
-    /// </summary>
-    public async Task SendEncoderInputAsync(int encoderId, int delta, bool fineMode = false)
-    {
-        var message = new LoupedeckMessage
+        /// <summary>
+        /// Send message to PixTouch application
+        /// </summary>
+        public async void SendMessageToPixTouch(LoupedeckMessage message)
         {
-            Type = "encoder_input",
-            EncoderId = encoderId,
-            Delta = delta,
-            FineMode = fineMode
-        };
+            if (!this._isRunning || this._writer == null)
+            {
+                PluginLog.Warning("Cannot send message - not connected to PixTouch");
+                return;
+            }
 
-        await SendMessageAsync(message);
-    }
-
-    /// <summary>
-    /// Send button press to PixTouch
-    /// </summary>
-    public async Task SendButtonInputAsync(string buttonId, bool pressed)
-    {
-        var message = new LoupedeckMessage
-        {
-            Type = "button_input",
-            ButtonId = buttonId,
-            Pressed = pressed
-        };
-
-        await SendMessageAsync(message);
-    }
-
-    private async Task SendMessageAsync(LoupedeckMessage message)
-    {
-        if (!IsConnected || _writer == null)
-            return;
-
-        await _sendLock.WaitAsync();
-        try
-        {
-            var json = JsonConvert.SerializeObject(message);
-            await _writer.WriteLineAsync(json);
+            await this._sendLock.WaitAsync();
+            try
+            {
+                var json = JsonConvert.SerializeObject(message);
+                await this._writer.WriteLineAsync(json);
+                PluginLog.Info($"Sent message to PixTouch: {message.Type}");
+            }
+            catch (Exception ex)
+            {
+                PluginLog.Error($"Error sending message: {ex.Message}");
+            }
+            finally
+            {
+                this._sendLock.Release();
+            }
         }
-        finally
-        {
-            _sendLock.Release();
-        }
-    }
-
-    protected virtual void OnMessageReceived(LoupedeckMessage message)
-    {
-        MessageReceived?.Invoke(this, message);
-    }
-
-    protected virtual void OnConnected()
-    {
-        Connected?.Invoke(this, EventArgs.Empty);
-    }
-
-    protected virtual void OnDisconnected()
-    {
-        Disconnected?.Invoke(this, EventArgs.Empty);
-    }
-
-    public void Dispose()
-    {
-        DisconnectAsync().Wait();
-        _sendLock?.Dispose();
-        GC.SuppressFinalize(this);
     }
 }
